@@ -15,7 +15,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
-
+    lateinit  var name : String
     private val requestReadLog =2
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,9 +31,11 @@ class MainActivity : AppCompatActivity() {
                 this,
                 Manifest.permission.READ_CONTACTS
             ) != PackageManager.PERMISSION_GRANTED
+
         ) {
             ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.READ_CALL_LOG,Manifest.permission.READ_CONTACTS), requestReadLog)
+//                Add the permission fro the sending and receiving sms  (PART 2)
+                this, arrayOf(Manifest.permission.READ_CALL_LOG,Manifest.permission.READ_CONTACTS, Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS), requestReadLog)
         }else{
             loadData()
         }
@@ -93,16 +95,25 @@ class MainActivity : AppCompatActivity() {
         return callDetials
     }
 
+
+
+
+//    @SuppressLint("Range")
     @SuppressLint("Range")
     private fun getCallerName(callerNameUri: String?): Any {
             return if (callerNameUri != null){
                 val cursor = contentResolver.query(Uri.parse(callerNameUri),null,null,null,null)
-                var name  = ""
+                name = "Unknown"
+
+//                Unknwon by default passed  not working down part
 
                 if ((cursor?.count ?: 0) > 0){
                     while (cursor != null && cursor.moveToNext()){
-                        name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME))
+
+                      name = cursor.getString( cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME))
+
                     }
+
                 }
                 cursor?.close()
                 return name
