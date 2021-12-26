@@ -2,19 +2,26 @@ package com.zaid.midweektaskcalllog
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.CallLog
 import android.provider.ContactsContract
+import android.provider.Telephony
+import android.telephony.SmsMessage
+
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.IOException
 
-class MainActivity : AppCompatActivity() {
+open class MainActivity : AppCompatActivity() {
     lateinit  var name : String
     private val requestReadLog =2
 
@@ -37,13 +44,15 @@ class MainActivity : AppCompatActivity() {
 //                Add the permission fro the sending and receiving sms  (PART 2)
                 this, arrayOf(Manifest.permission.READ_CALL_LOG,Manifest.permission.READ_CONTACTS, Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS), requestReadLog)
         }else{
+            //            BroadcastReceiver for the sms
+            receivemsg()
+//            getting the CallLog details function
             loadData()
+
         }
     }
 
-
-
-
+// Working on the Broadcasting the callogs
 
     //
     override fun onRequestPermissionsResult(
@@ -52,10 +61,35 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == requestReadLog) loadData()
+        if (requestCode == requestReadLog)
+            loadData()
+            receivemsg()
+
     }
 
+    private fun receivemsg() {
+        var br  = object : BroadcastReceiver() {
+            override fun onReceive(p0: Context?, p1: Intent?) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+                   for (sms:SmsMessage in Telephony.Sms.Intents.getMessagesFromIntent(p1)){
+                       Toast.makeText(applicationContext,sms.displayMessageBody,Toast.LENGTH_LONG).show()
+                   }
+                }
+            }
+        }
+        registerReceiver(br, IntentFilter("android.provider.Telephony.SMS_RECEIVED"))
+    }
+
+
+
+
+
+
+
+
+
     private fun loadData() {
+
         val list = getCallsDetails(this)
         val adapter = ListAdapter(this, list)
         list_view.adapter = adapter
